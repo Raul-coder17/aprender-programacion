@@ -1,0 +1,25 @@
+# Archivos generados localmente
+notas/*.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp*
+.yarn/
+
+# IDEs y Editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Archivos del sistema
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

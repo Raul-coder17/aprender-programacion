@@ -1,0 +1,13 @@
+{
+  "name": "aprender-visor-interactivo",
+  "version": "1.0.0",
+  "description": "Visor interactivo de lecciones de programación en Markdown",
+  "main": "iniciar_visor.js",
+  "scripts": {
+    "start": "node iniciar_visor.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "private": true
+}

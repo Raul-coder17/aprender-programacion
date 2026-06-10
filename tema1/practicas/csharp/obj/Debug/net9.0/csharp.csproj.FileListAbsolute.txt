@@ -1,0 +1,14 @@
+C:\Aprender\tema1\practicas\csharp\bin\Debug\net9.0\csharp.exe
+C:\Aprender\tema1\practicas\csharp\bin\Debug\net9.0\csharp.deps.json
+C:\Aprender\tema1\practicas\csharp\bin\Debug\net9.0\csharp.runtimeconfig.json
+C:\Aprender\tema1\practicas\csharp\bin\Debug\net9.0\csharp.dll
+C:\Aprender\tema1\practicas\csharp\bin\Debug\net9.0\csharp.pdb
+C:\Aprender\tema1\practicas\csharp\obj\Debug\net9.0\csharp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Aprender\tema1\practicas\csharp\obj\Debug\net9.0\csharp.AssemblyInfoInputs.cache
+C:\Aprender\tema1\practicas\csharp\obj\Debug\net9.0\csharp.AssemblyInfo.cs
+C:\Aprender\tema1\practicas\csharp\obj\Debug\net9.0\csharp.csproj.CoreCompileInputs.cache
+C:\Aprender\tema1\practicas\csharp\obj\Debug\net9.0\csharp.dll
+C:\Aprender\tema1\practicas\csharp\obj\Debug\net9.0\refint\csharp.dll
+C:\Aprender\tema1\practicas\csharp\obj\Debug\net9.0\csharp.pdb
+C:\Aprender\tema1\practicas\csharp\obj\Debug\net9.0\csharp.genruntimeconfig.cache
+C:\Aprender\tema1\practicas\csharp\obj\Debug\net9.0\ref\csharp.dll
