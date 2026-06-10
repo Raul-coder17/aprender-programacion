@@ -16,10 +16,15 @@ const BASE_DIR = __dirname;
 const INITIAL_PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const IS_PRODUCTION = !!process.env.PORT;
 const NOTES_DIR = path.join(BASE_DIR, 'notas');
+const SCRATCH_DIR = path.join(BASE_DIR, 'scratch');
+const CSHARP_DIR = path.join(SCRATCH_DIR, 'csharp_scratch');
 
-// Asegurar que exista la carpeta de notas
+// Asegurar que existan las carpetas de trabajo
 if (!fs.existsSync(NOTES_DIR)) {
     fs.mkdirSync(NOTES_DIR);
+}
+if (!fs.existsSync(SCRATCH_DIR)) {
+    fs.mkdirSync(SCRATCH_DIR);
 }
 
 // Escanea el directorio buscando carpetas que contengan temas (ej: tema1, tema2, etc)
@@ -178,10 +183,108 @@ const server = http.createServer((req, res) => {
         }
     }
 
+    // Ruta 5: API de Ejecución de Código (Java / C#)
+    if (pathname === '/api/ejecutar') {
+            if (IS_PRODUCTION) {
+                res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ error: "La ejecución de Java y C# solo está disponible localmente." }));
+                return;
+            }
+
+            if (req.method === 'POST') {
+                let body = '';
+                req.on('data', chunk => { body += chunk; });
+                req.on('end', () => {
+                    try {
+                        const data = JSON.parse(body);
+                        const { lenguaje, codigo } = data;
+
+                        if (!lenguaje || !codigo) {
+                            res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+                            res.end("Faltan parámetros 'lenguaje' o 'codigo'.");
+                            return;
+                        }
+
+                        ejecutarCodigoLocal(lenguaje, codigo, (err, stdout, stderr) => {
+                            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                            res.end(JSON.stringify({
+                                success: !err,
+                                error: err ? err.message : null,
+                                stdout: stdout,
+                                stderr: stderr
+                            }));
+                        });
+                    } catch (e) {
+                        res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+                        res.end("Cuerpo JSON inválido.");
+                    }
+                });
+                return;
+            }
+        }
+
     // Cualquier otra ruta no manejada
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end("404 No encontrado.");
 });
+
+// Función auxiliar para compilar/ejecutar C# o Java de forma local y segura
+function ejecutarCodigoLocal(lenguaje, codigo, callback) {
+    if (lenguaje === 'java') {
+        const match = codigo.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+        const className = match ? match[1] : 'TempClass';
+        const javaFile = path.join(SCRATCH_DIR, `${className}.java`);
+        
+        fs.writeFile(javaFile, codigo, 'utf8', (err) => {
+            if (err) return callback(err);
+            
+            exec(`java "${javaFile}"`, { timeout: 5000 }, (execErr, stdout, stderr) => {
+                // Limpieza del archivo .java
+                fs.unlink(javaFile, () => {});
+                callback(execErr, stdout, stderr);
+            });
+        });
+    } else if (lenguaje === 'csharp') {
+        initializeCsharpProject((initErr) => {
+            if (initErr) {
+                return callback(initErr, "", "Error al inicializar el entorno local de C#.");
+            }
+            
+            const programFile = path.join(CSHARP_DIR, 'Program.cs');
+            fs.writeFile(programFile, codigo, 'utf8', (err) => {
+                if (err) return callback(err);
+                
+                exec('dotnet run', { cwd: CSHARP_DIR, timeout: 5000 }, (execErr, stdout, stderr) => {
+                    callback(execErr, stdout, stderr);
+                });
+            });
+        });
+    } else {
+        callback(new Error(`Lenguaje '${lenguaje}' no soportado para ejecución local.`));
+    }
+}
+
+// Inicializa el proyecto C# temporal
+function initializeCsharpProject(callback) {
+    const csprojPath = path.join(CSHARP_DIR, 'csharp_scratch.csproj');
+    if (fs.existsSync(csprojPath)) {
+        return callback(null);
+    }
+    
+    if (!fs.existsSync(CSHARP_DIR)) {
+        fs.mkdirSync(CSHARP_DIR, { recursive: true });
+    }
+    
+    console.log("Inicializando proyecto C# temporal para el Playground...");
+    exec('dotnet new console --force', { cwd: CSHARP_DIR }, (err) => {
+        if (err) {
+            console.error("Error al inicializar proyecto C#:", err);
+        } else {
+            console.log("Proyecto C# inicializado con éxito.");
+        }
+        callback(err);
+    });
+}
 
 // Función para iniciar el servidor buscando un puerto libre
 function escuchar(port) {

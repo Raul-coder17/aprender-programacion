@@ -13,6 +13,9 @@
     <!-- Marked.js (Markdown Parser) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
+    <!-- Pyodide (WebAssembly Python) -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    
     <!-- Highlight.js (Syntax Highlighting) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark-reasonable.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -114,6 +117,92 @@
             background: linear-gradient(135deg, #FFF, var(--text-secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        .github-repo-link {
+            color: var(--text-secondary);
+            transition: color 0.2s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+        }
+        .github-repo-link:hover {
+            color: var(--text-primary);
+            transform: scale(1.1);
+        }
+
+        /* Progress Tracker Styles */
+        .progress-container {
+            padding: 0 24px 16px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-family: var(--font-title);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #818CF8);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Sidebar item layout with checkboxes */
+        .sidebar-item-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 0 4px;
+            margin-bottom: 2px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+        .progress-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            color: white;
+            background: transparent;
+        }
+        .progress-checkbox:hover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.1);
+            transform: scale(1.08);
+        }
+        .progress-checkbox.checked {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 6px var(--accent-glow);
+        }
+        .progress-checkbox svg {
+            width: 10px;
+            height: 10px;
+            stroke: #fff;
         }
 
         .theme-list {
@@ -763,6 +852,225 @@
             padding: 40px 20px;
             opacity: 0.6;
         }
+
+        /* Playground Drawer */
+        .playground-drawer {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            height: 100vh;
+            background: rgba(10, 15, 30, 0.9);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-left: 1px solid var(--border);
+            z-index: 95;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: -15px 0 35px rgba(0, 0, 0, 0.4);
+        }
+        .playground-drawer.open {
+            right: 0;
+        }
+        .playground-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .playground-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .playground-title-row h3 {
+            font-family: var(--font-title);
+            font-size: 1.25rem;
+            color: #FFF;
+        }
+        .playground-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .playground-lang-select {
+            background: #1E293B;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: var(--font-title);
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .playground-lang-select option {
+            background: #0F172A;
+            color: var(--text-primary);
+        }
+        .playground-status-banner {
+            background: rgba(59, 130, 246, 0.1);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 10px 16px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: #93C5FD;
+            display: none;
+        }
+        .playground-status-banner.show {
+            display: block;
+        }
+        .playground-status-banner a {
+            color: #60A5FA;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .playground-status-banner a:hover {
+            color: #93C5FD;
+        }
+        .playground-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .playground-editor-wrapper {
+            flex: 1.2;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 2px solid var(--border);
+        }
+        .playground-editor-header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-family: var(--font-title);
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .playground-textarea {
+            flex: 1;
+            background: #070A13;
+            border: none;
+            color: #F8FAFC;
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            padding: 16px;
+            resize: none;
+            outline: none;
+            line-height: 1.6;
+            tab-size: 4;
+        }
+        .playground-console-wrapper {
+            flex: 0.8;
+            display: flex;
+            flex-direction: column;
+            background: #030712;
+            overflow: hidden;
+        }
+        .playground-console-header {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-family: var(--font-title);
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .playground-console-clear {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-family: var(--font-title);
+        }
+        .playground-console-clear:hover {
+            color: var(--text-primary);
+            text-decoration: underline;
+        }
+        .playground-terminal {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            font-family: var(--font-code);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #D1D5DB;
+        }
+        .playground-terminal::-webkit-scrollbar {
+            width: 4px;
+        }
+        .playground-terminal::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        .terminal-line {
+            margin-bottom: 6px;
+            white-space: pre-wrap;
+        }
+        .terminal-line.output {
+            color: #F3F4F6;
+        }
+        .terminal-line.error {
+            color: #EF4444;
+            background: rgba(239, 68, 68, 0.08);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border-left: 3px solid #EF4444;
+        }
+        .terminal-line.system {
+            color: #10B981;
+            font-weight: 500;
+        }
+        .terminal-line.info {
+            color: #3B82F6;
+        }
+
+        /* Try code button */
+        .code-block-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .btn-try-code {
+            position: absolute;
+            top: 40px; /* Below the language header */
+            right: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #C7D2FE;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--font-title);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            opacity: 0;
+            z-index: 5;
+        }
+        .code-block-wrapper:hover .btn-try-code {
+            opacity: 1;
+        }
+        .btn-try-code:hover {
+            background: var(--accent);
+            color: #FFF;
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
     </style>
 </head>
 <body>
@@ -773,6 +1081,18 @@
         <div class="sidebar-header">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 6 8-4 8 4v10l-8 4-8-4Z"/><path d="m12 22 8-4V6L12 2Z"/><path d="M12 22 4 18V6l8-4Z"/><path d="m12 2 8 4-8 4-8-4Z"/><path d="M12 10v12"/></svg>
             <h1>Aprender Programación</h1>
+            <a href="https://github.com/Raul-coder17/aprender-programacion" target="_blank" class="github-repo-link" title="Ver Guías en GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+            </a>
+        </div>
+        <div class="progress-container">
+            <div class="progress-info">
+                <span>Progreso Global</span>
+                <span id="progress-percentage">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
         </div>
         <nav class="theme-list" id="theme-list">
             <!-- Dynamic list generated by script -->
@@ -797,6 +1117,9 @@
 
     <!-- Floating Action Buttons -->
     <div class="floating-buttons">
+        <button class="btn-floating btn-secondary" id="open-playground-btn" title="Consola de Pruebas (Playground)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        </button>
         <button class="btn-floating btn-secondary" id="open-notes-btn" title="Ver Notas">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
         </button>
@@ -815,6 +1138,51 @@
         </div>
         <div class="notes-list" id="notes-list">
             <!-- Dynamic notes loaded here -->
+        </div>
+    </aside>
+
+    <!-- Playground Drawer -->
+    <aside class="playground-drawer" id="playground-drawer">
+        <div class="playground-header">
+            <div class="playground-title-row">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <h3>Playground</h3>
+            </div>
+            <div class="playground-controls">
+                <select id="playground-lang-select" class="playground-lang-select">
+                    <option value="javascript">JavaScript 🟢 Disponible</option>
+                    <option value="python">Python 🟢 Disponible</option>
+                    <option value="java">Java 💻 Solo Local</option>
+                    <option value="csharp">C# 💻 Solo Local</option>
+                </select>
+                <button class="btn btn-primary" id="run-code-btn" style="padding: 6px 14px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Ejecutar
+                </button>
+                <button class="modal-close-btn" id="close-playground-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="playground-status-banner" id="playground-status-banner">
+            <!-- Dinamically loaded warning messages -->
+        </div>
+        
+        <div class="playground-body">
+            <div class="playground-editor-wrapper">
+                <div class="playground-editor-header">Editor de Código</div>
+                <textarea id="playground-code-textarea" class="playground-textarea" spellcheck="false" placeholder="// Escribe tu código aquí..."></textarea>
+            </div>
+            <div class="playground-console-wrapper">
+                <div class="playground-console-header">
+                    <span>Consola de Salida</span>
+                    <button class="playground-console-clear" id="clear-console-btn">Limpiar</button>
+                </div>
+                <div class="playground-terminal" id="playground-terminal">
+                    <div class="terminal-line system">Playground inicializado. Escribe o carga un ejemplo y presiona Ejecutar.</div>
+                </div>
+            </div>
         </div>
     </aside>
 
@@ -872,11 +1240,20 @@
         const renderer = new marked.Renderer();
         renderer.code = function({ text, lang }) {
             const cleanLang = lang || 'plaintext';
-            // Escape HTML characters
             const escapedText = escapeHTML(text);
-                
+            
+            // Only show "Probar" button for JS, Python, Java, C#
+            const executableLangs = ['javascript', 'js', 'python', 'py', 'java', 'csharp', 'cs'];
+            const isExecutable = executableLangs.includes(cleanLang.toLowerCase());
+            
+            const buttonHtml = isExecutable ? 
+                `<button class="btn-try-code" onclick="tryInPlayground('${cleanLang}', \`${encodeURIComponent(text)}\`)">Probar</button>` : '';
+
             return `
-                <pre><div class="code-block-header">${cleanLang}</div><code class="language-${cleanLang}">${escapedText}</code></pre>
+                <div class="code-block-wrapper">
+                    ${buttonHtml}
+                    <pre><div class="code-block-header">${cleanLang}</div><code class="language-${cleanLang}">${escapedText}</code></pre>
+                </div>
             `;
         };
         marked.setOptions({ renderer });
@@ -931,16 +1308,38 @@
                         displayName: displayName
                     });
 
+                    // Item container row
+                    const itemRow = document.createElement('div');
+                    itemRow.className = 'sidebar-item-row';
+
+                    // Progress Checkbox
+                    const checkbox = document.createElement('span');
+                    checkbox.className = 'progress-checkbox';
+                    checkbox.setAttribute('data-path', file.path);
+                    const completed = isLessonCompleted(file.path);
+                    if (completed) checkbox.classList.add('checked');
+                    checkbox.innerHTML = completed ? 
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : '';
+                    
+                    checkbox.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        toggleLessonComplete(file.path, checkbox);
+                    });
+
+                    // File Link
                     const link = document.createElement('a');
                     link.className = 'file-link';
                     link.setAttribute('data-path', file.path);
+                    if (activeFilePath === file.path) link.classList.add('active');
                     link.innerHTML = `
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         <span>${displayName}</span>
                     `;
                     link.addEventListener('click', () => loadFile(file.path, link));
                     
-                    li.appendChild(link);
+                    itemRow.appendChild(checkbox);
+                    itemRow.appendChild(link);
+                    li.appendChild(itemRow);
                     ul.appendChild(li);
                 });
                 
@@ -949,6 +1348,7 @@
             }
 
             updateLessonDropdown();
+            updateGlobalProgress();
         }
 
         function updateLessonDropdown() {
@@ -1160,6 +1560,271 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
+        }
+
+        // --- Progress Tracker Logic ---
+        function getCompletedLessons() {
+            try {
+                const completed = localStorage.getItem('completed_lessons');
+                return completed ? JSON.parse(completed) : [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function isLessonCompleted(filePath) {
+            return getCompletedLessons().includes(filePath);
+        }
+
+        function toggleLessonComplete(filePath, checkboxElement) {
+            let completed = getCompletedLessons();
+            const index = completed.indexOf(filePath);
+            
+            if (index > -1) {
+                completed.splice(index, 1);
+                checkboxElement.classList.remove('checked');
+                checkboxElement.innerHTML = '';
+            } else {
+                completed.push(filePath);
+                checkboxElement.classList.add('checked');
+                checkboxElement.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+            }
+            
+            localStorage.setItem('completed_lessons', JSON.stringify(completed));
+            updateGlobalProgress();
+        }
+
+        function updateGlobalProgress() {
+            const total = allLessonsList.length;
+            if (total === 0) return;
+            const completedCount = getCompletedLessons().filter(path => 
+                allLessonsList.some(lesson => lesson.path === path)
+            ).length;
+            const percentage = Math.round((completedCount / total) * 100);
+            
+            document.getElementById('progress-percentage').textContent = `${percentage}%`;
+            document.getElementById('progress-bar-fill').style.width = `${percentage}%`;
+        }
+
+        // --- Playground Logic ---
+        const openPlaygroundBtn = document.getElementById('open-playground-btn');
+        const closePlaygroundBtn = document.getElementById('close-playground-btn');
+        const playgroundDrawer = document.getElementById('playground-drawer');
+        const playgroundLangSelect = document.getElementById('playground-lang-select');
+        const runCodeBtn = document.getElementById('run-code-btn');
+        const clearConsoleBtn = document.getElementById('clear-console-btn');
+        const playgroundCodeTextarea = document.getElementById('playground-code-textarea');
+        const playgroundTerminal = document.getElementById('playground-terminal');
+        const playgroundStatusBanner = document.getElementById('playground-status-banner');
+
+        let pyodideInstance = null;
+        let isPyodideLoading = false;
+
+        // Toggle drawer
+        openPlaygroundBtn.addEventListener('click', () => {
+            playgroundDrawer.classList.add('open');
+            checkPlaygroundStatus();
+        });
+        closePlaygroundBtn.addEventListener('click', () => {
+            playgroundDrawer.classList.remove('open');
+        });
+
+        // Clear console
+        clearConsoleBtn.addEventListener('click', () => {
+            playgroundTerminal.innerHTML = '<div class="terminal-line system">Consola limpia.</div>';
+        });
+
+        // Detect if production mode
+        const IS_PROD = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.startsWith('192.168.');
+
+        function checkPlaygroundStatus() {
+            const lang = playgroundLangSelect.value;
+            playgroundStatusBanner.className = 'playground-status-banner';
+            playgroundStatusBanner.innerHTML = '';
+            runCodeBtn.disabled = false;
+            runCodeBtn.style.opacity = '1';
+
+            if ((lang === 'java' || lang === 'csharp') && IS_PROD) {
+                playgroundStatusBanner.classList.add('show');
+                playgroundStatusBanner.innerHTML = `
+                    ⚠️ <strong>Ejecución no disponible en la nube:</strong> C# y Java requieren compiladores instalados en el sistema local. 
+                    <a href="https://github.com/Raul-coder17/aprender-programacion" target="_blank">Sigue la guía en GitHub</a> para clonar y ejecutar el visor en tu PC local.
+                `;
+                runCodeBtn.disabled = true;
+                runCodeBtn.style.opacity = '0.5';
+            } else if (lang === 'python' && !pyodideInstance) {
+                playgroundStatusBanner.classList.add('show');
+                playgroundStatusBanner.innerHTML = `🐍 Python se ejecutará en tu navegador vía WebAssembly (Pyodide). Se cargará al presionar Ejecutar por primera vez.`;
+            }
+        }
+
+        playgroundLangSelect.addEventListener('change', checkPlaygroundStatus);
+
+        // Preload code when "Probar" is clicked
+        window.tryInPlayground = function(lang, encodedCode) {
+            const code = decodeURIComponent(encodedCode);
+            let targetLang = lang.toLowerCase();
+            if (targetLang === 'js') targetLang = 'javascript';
+            if (targetLang === 'py') targetLang = 'python';
+            if (targetLang === 'cs') targetLang = 'csharp';
+
+            playgroundLangSelect.value = targetLang;
+            playgroundCodeTextarea.value = code;
+            
+            playgroundDrawer.classList.add('open');
+            checkPlaygroundStatus();
+            
+            // Clean console and print load message
+            playgroundTerminal.innerHTML = `<div class="terminal-line info">Código cargado de la lección para ${targetLang.toUpperCase()}.</div>`;
+        };
+
+        // Write line to terminal
+        function printToTerminal(text, type = 'output') {
+            const line = document.createElement('div');
+            line.className = `terminal-line ${type}`;
+            line.textContent = text;
+            playgroundTerminal.appendChild(line);
+            playgroundTerminal.scrollTop = playgroundTerminal.scrollHeight;
+        }
+
+        // Run code click handler
+        runCodeBtn.addEventListener('click', async () => {
+            const lang = playgroundLangSelect.value;
+            const code = playgroundCodeTextarea.value;
+            
+            if (!code.trim()) {
+                printToTerminal("El editor está vacío.", "error");
+                return;
+            }
+
+            printToTerminal(`\n> Ejecutando código (${lang.toUpperCase()})...`, "system");
+            
+            if (lang === 'javascript') {
+                runJS(code);
+            } else if (lang === 'python') {
+                await runPython(code);
+            } else if (lang === 'java' || lang === 'csharp') {
+                await runBackendLanguage(lang, code);
+            }
+        });
+
+        // Run JavaScript
+        function runJS(code) {
+            const logs = [];
+            const originalLog = console.log;
+            const originalError = console.error;
+            
+            // Redirect logs
+            console.log = (...args) => {
+                logs.push({
+                    text: args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' '),
+                    type: 'output'
+                });
+            };
+            console.error = (...args) => {
+                logs.push({
+                    text: args.join(' '),
+                    type: 'error'
+                });
+            };
+
+            try {
+                // Execute using Function
+                const runFunc = new Function(code);
+                runFunc();
+                
+                // Restore logs
+                console.log = originalLog;
+                console.error = originalError;
+
+                if (logs.length === 0) {
+                    printToTerminal("El código se ejecutó con éxito, pero no devolvió ninguna salida (usa console.log para imprimir).", "info");
+                } else {
+                    logs.forEach(log => printToTerminal(log.text, log.type));
+                }
+            } catch (err) {
+                console.log = originalLog;
+                console.error = originalError;
+                printToTerminal(`${err.name}: ${err.message}`, "error");
+            }
+        }
+
+        // Run Python
+        async function runPython(code) {
+            if (isPyodideLoading) return;
+
+            if (!pyodideInstance) {
+                printToTerminal("Cargando entorno de Python (Pyodide Wasm) desde CDN... (Esto puede tomar unos segundos la primera vez)", "info");
+                isPyodideLoading = true;
+                try {
+                    pyodideInstance = await loadPyodide();
+                    isPyodideLoading = false;
+                    printToTerminal("Entorno de Python cargado con éxito.", "system");
+                    playgroundStatusBanner.classList.remove('show');
+                } catch (err) {
+                    isPyodideLoading = false;
+                    printToTerminal("Error al cargar Pyodide: " + err.message, "error");
+                    return;
+                }
+            }
+
+            // Capture stdout
+            const logs = [];
+            pyodideInstance.setStdout({
+                batched: (str) => {
+                    logs.push(str);
+                }
+            });
+            pyodideInstance.setStderr({
+                batched: (str) => {
+                    printToTerminal(str, "error");
+                }
+            });
+
+            try {
+                await pyodideInstance.runPythonAsync(code);
+                if (logs.length === 0) {
+                    printToTerminal("Código ejecutado (sin salida estándar, usa print()).", "info");
+                } else {
+                    logs.forEach(log => printToTerminal(log, "output"));
+                }
+            } catch (err) {
+                printToTerminal(err.message, "error");
+            }
+        }
+
+        // Run Java / C# via Backend API
+        async function runBackendLanguage(lang, code) {
+            printToTerminal("Enviando código al servidor local para compilar y ejecutar...", "info");
+            try {
+                const res = await fetch('/api/ejecutar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lenguaje: lang, codigo: code })
+                });
+
+                if (res.status === 403) {
+                    printToTerminal("Error 403: La ejecución en la nube no está permitida para este lenguaje.", "error");
+                    return;
+                }
+
+                const result = await res.json();
+                
+                if (result.stdout) {
+                    printToTerminal(result.stdout, "output");
+                }
+                if (result.stderr) {
+                    printToTerminal(result.stderr, "error");
+                }
+                if (result.error && !result.stdout && !result.stderr) {
+                    printToTerminal(result.error, "error");
+                }
+                if (!result.stdout && !result.stderr && !result.error) {
+                    printToTerminal("El proceso terminó sin imprimir ninguna salida.", "info");
+                }
+            } catch (err) {
+                printToTerminal("Error al conectar con el servidor backend: " + err.message, "error");
+            }
         }
 
         // Init

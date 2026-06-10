@@ -1,5 +1,6 @@
 # Archivos generados localmente
 notas/*.json
+scratch/
 
 # Node
 node_modules/
