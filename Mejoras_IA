@@ -1,0 +1,38 @@
+# Plan de Implementación: Mejoras en el Mentor IA (Conversación y Directismo)
+
+Este plan detalla los ajustes para que el Mentor IA sea más directo, conciso y estructurado, evitando espaciados redundantes. Además, se añade la capacidad de realizar preguntas de seguimiento directamente desde la terminal del Playground, manteniendo el contexto de las últimas interacciones del chat.
+
+---
+
+## Proposed Changes
+
+### Visor Plantilla
+#### [MODIFY] [visor_plantilla.html](file:///c:/Aprender/visor_plantilla.html)
+- **CSS**:
+  - Ajustar `.mentor-body p` y `.mentor-body` para que el margen vertical de los párrafos sea más compacto (`margin-bottom: 6px`).
+  - Añadir estilos para el contenedor del input de conversación terminal (`.terminal-input-wrapper`, `.terminal-input`) que se colocará al final de la terminal de salida.
+- **HTML**:
+  - Agregar el contenedor e input `#mentor-chat-wrapper` justo debajo de la terminal de salida del Playground (`#playground-terminal`).
+- **JavaScript**:
+  - Declarar variables para la historia del chat (`mentorChatHistory`) y el campo de texto.
+  - Modificar el System Prompt en `askGeminiMentor()` para exigir que las pistas sean directas, compactas, y fáciles de deducir (sin dar código), y restringir la respuesta para que no deje líneas en blanco redundantes.
+  - Implementar la función de envío de seguimiento `sendMentorFollowUp()` al presionar Enter en el input:
+    1. Mostrar el mensaje del usuario en la consola.
+    2. Agregar el mensaje al historial de chat.
+    3. Mantener un límite de historial (máximo 10 interacciones).
+    4. Realizar la petición Fetch a la API de Gemini enviando el historial completo de `contents`.
+    5. Renderizar la respuesta y mantener el foco del input listo para otra pregunta.
+  - Reiniciar `mentorChatHistory` e inhabilitar/ocultar el input si se presiona "Limpiar" o se ejecuta nuevo código.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Ejecutar pruebas en el visor para comprobar la visualización de la caja de chat de la terminal al invocar el Mentor.
+
+### Manual Verification
+1. Escribir un error de sintaxis en el editor y consultar al Mentor IA.
+2. Comprobar que la pista de respuesta es directa y el espaciado entre párrafos es compacto.
+3. Verificar que aparece el campo de entrada `🤖 Preguntar al Mentor >` al final de la consola.
+4. Escribir una pregunta de seguimiento (ej. *"¿Por qué se usan llaves en lugar de corchetes?"*), presionar Enter y validar que la IA responda recordando el contexto anterior sin regalar el código de solución.
