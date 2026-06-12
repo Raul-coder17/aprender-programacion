@@ -947,6 +947,7 @@
             display: flex;
             flex-direction: column;
             border-bottom: 2px solid var(--border);
+            min-height: 0;
         }
         .playground-editor-header {
             background: rgba(0, 0, 0, 0.2);
@@ -983,6 +984,7 @@
             flex-direction: column;
             background: #030712;
             overflow: hidden;
+            min-height: 0;
         }
         .playground-console-header {
             background: rgba(0, 0, 0, 0.4);
@@ -1313,8 +1315,10 @@
         <div class="playground-body">
             <div class="playground-editor-wrapper">
                 <div class="playground-editor-header">Editor de Código</div>
-                <div id="playground-code-editor" class="playground-editor-container">
-                    <div style="padding: 20px; color: var(--text-secondary); font-family: var(--font-title); font-size: 0.9rem; text-align: center; width: 100%;">Cargando editor de código...</div>
+                <div style="position: relative; flex: 1; min-height: 0; width: 100%;">
+                    <div id="playground-code-editor" style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; background: #070A13;">
+                        <div style="padding: 20px; color: var(--text-secondary); font-family: var(--font-title); font-size: 0.9rem; text-align: center; width: 100%;">Cargando editor de código...</div>
+                    </div>
                 </div>
             </div>
             <div class="playground-console-wrapper">
@@ -1875,7 +1879,9 @@
                 }
             });
 
-            editorInstance = monaco.editor.create(document.getElementById('playground-code-editor'), {
+            const editorContainer = document.getElementById('playground-code-editor');
+            editorContainer.innerHTML = ''; // Clear loading message
+            editorInstance = monaco.editor.create(editorContainer, {
                 value: pendingEditorState ? pendingEditorState.code : '// Escribe tu código aquí...\n',
                 language: pendingEditorState ? pendingEditorState.lang : 'javascript',
                 theme: 'aprenderTheme',
@@ -2066,7 +2072,7 @@ ${terminalLines}
 \`\`\`
 
 REGLAS DE ORO A SEGUIR ESTRICTAMENTE:
-1. NO entregues el código de solución completo, ni bloques de código corregidos, ni fragmentos de código de la solución. El estudiante debe escribir el código por sí mismo.
+1. NO entregues el código de solución completo ni bloques de código corregidos para el problema específico. Sin embargo, SÍ puedes dar ejemplos cortos de sintaxis general (plantillas o ejemplos genéricos) y mencionar los métodos o funciones específicos que el estudiante necesita utilizar para resolverlo.
 2. Ve DIRECTO al grano. Evita rodeos extensos, explicaciones teóricas largas o introducciones y saludos redundantes.
 3. Explica la causa del error en una o dos frases cortas y claras.
 4. Proporciona una pista extremadamente directa, corta y fácil de deducir para guiar al estudiante a la corrección.
