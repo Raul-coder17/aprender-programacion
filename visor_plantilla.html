@@ -1162,7 +1162,16 @@
         }
  
         /* Mentor Chat Input CSS */
-        .mentor-chat-wrapper, .terminal-input-wrapper {
+        .mentor-chat-wrapper {
+            display: flex;
+            align-items: center;
+            background: rgba(99, 102, 241, 0.04);
+            border-top: 1px solid rgba(99, 102, 241, 0.15);
+            padding: 8px 16px;
+            font-family: var(--font-title);
+            gap: 10px;
+        }
+        .terminal-input-wrapper {
             display: none;
             align-items: center;
             background: rgba(99, 102, 241, 0.04);
@@ -1982,7 +1991,6 @@
             checkPlaygroundStatus();
             
             // Reset mentor state on loading new exercise
-            mentorChatWrapper.style.display = 'none';
             mentorChatInput.value = '';
             mentorChatInput.disabled = false;
             mentorChatHistory = [];
@@ -2013,7 +2021,6 @@
             printToTerminal(`\n> Ejecutando código (${lang.toUpperCase()})...`, "system");
             
             // Reset mentor state on new execution
-            mentorChatWrapper.style.display = 'none';
             mentorChatInput.value = '';
             mentorChatInput.disabled = false;
             mentorChatHistory = [];
@@ -2053,8 +2060,7 @@
             askMentorBtn.disabled = true;
             askMentorBtn.style.opacity = '0.5';
 
-            // Hide previous wrapper and reset history for a new initial prompt
-            mentorChatWrapper.style.display = 'none';
+            // Reset history for a new initial prompt
             mentorChatHistory = [];
 
             const prompt = `Eres un mentor de programación socrático, extremadamente directo, conciso y experto para estudiantes principiantes.
@@ -2172,11 +2178,49 @@ REGLAS DE ORO A SEGUIR ESTRICTAMENTE:
             playgroundTerminal.appendChild(userContainer);
             playgroundTerminal.scrollTop = playgroundTerminal.scrollHeight;
 
-            // Add to history
-            mentorChatHistory.push({
-                role: "user",
-                parts: [{ text: userMsg }]
-            });
+            if (mentorChatHistory.length === 0) {
+                // Initial prompt containing full context + the student's question!
+                const code = editorInstance ? editorInstance.getValue() : '';
+                const lang = playgroundLangSelect.value;
+                const terminalLines = Array.from(playgroundTerminal.querySelectorAll('.terminal-line'))
+                    .map(el => el.textContent)
+                    .slice(-15)
+                    .join('\n');
+
+                const initialPrompt = `Eres un mentor de programación socrático, extremadamente directo, conciso y experto para estudiantes principiantes.
+Tu tarea es analizar el código escrito por el usuario y el error de salida en la consola, y guiarlo de manera inmediata y sin rodeos para que lo resuelva por sí mismo.
+
+CONTEXTO DEL ESTUDIANTE:
+- Lenguaje: ${lang.toUpperCase()}
+- Código en el editor:
+\`\`\`${lang}
+${code}
+\`\`\`
+- Salida de la consola (últimas líneas):
+\`\`\`
+${terminalLines}
+\`\`\`
+
+REGLAS DE ORO A SEGUIR ESTRICTAMENTE:
+1. NO entregues el código de solución completo ni bloques de código corregidos para el problema específico. Sin embargo, SÍ puedes dar ejemplos cortos de sintaxis general (plantillas o ejemplos genéricos) y mencionar los métodos o funciones específicos que el estudiante necesita utilizar para resolverlo.
+2. Ve DIRECTO al grano. Evita rodeos extensos, explicaciones teóricas largas o introducciones y saludos redundantes.
+3. Explica la causa del error en una o dos frases cortas y claras.
+4. Proporciona una pista extremadamente directa, corta y fácil de deducir para guiar al estudiante a la corrección.
+5. NO uses líneas en blanco redundantes, espacios verticales excesivos o párrafos vacíos. Mantén la respuesta compacta (máximo 2 párrafos cortos).
+
+Duda o pregunta del estudiante: "${userMsg}"`;
+
+                mentorChatHistory.push({
+                    role: "user",
+                    parts: [{ text: initialPrompt }]
+                });
+            } else {
+                // Add to history as standard follow-up
+                mentorChatHistory.push({
+                    role: "user",
+                    parts: [{ text: userMsg }]
+                });
+            }
 
             // Limit history size to last 11 messages (1 initial prompt + 5 user + 5 model turns)
             if (mentorChatHistory.length > 11) {
