@@ -16,6 +16,9 @@
     <!-- Pyodide (WebAssembly Python) -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
     
+    <!-- Monaco Editor Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    
     <!-- Highlight.js (Syntax Highlighting) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark-reasonable.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -968,6 +971,12 @@
             line-height: 1.6;
             tab-size: 4;
         }
+        .playground-editor-container {
+            flex: 1;
+            min-height: 0;
+            background: #070A13;
+            width: 100%;
+        }
         .playground-console-wrapper {
             flex: 0.8;
             display: flex;
@@ -1304,7 +1313,9 @@
         <div class="playground-body">
             <div class="playground-editor-wrapper">
                 <div class="playground-editor-header">Editor de Código</div>
-                <textarea id="playground-code-textarea" class="playground-textarea" spellcheck="false" placeholder="// Escribe tu código aquí..."></textarea>
+                <div id="playground-code-editor" class="playground-editor-container">
+                    <div style="padding: 20px; color: var(--text-secondary); font-family: var(--font-title); font-size: 0.9rem; text-align: center; width: 100%;">Cargando editor de código...</div>
+                </div>
             </div>
             <div class="playground-console-wrapper">
                 <div class="playground-console-header">
@@ -1830,105 +1841,59 @@
         const playgroundLangSelect = document.getElementById('playground-lang-select');
         const runCodeBtn = document.getElementById('run-code-btn');
         const clearConsoleBtn = document.getElementById('clear-console-btn');
-        const playgroundCodeTextarea = document.getElementById('playground-code-textarea');
+        const playgroundCodeTextarea = document.getElementById('playground-code-editor');
         const playgroundTerminal = document.getElementById('playground-terminal');
         const playgroundStatusBanner = document.getElementById('playground-status-banner');
 
-        // Indentation and key handling for the code editor
-        playgroundCodeTextarea.addEventListener('keydown', (e) => {
-            const start = playgroundCodeTextarea.selectionStart;
-            const end = playgroundCodeTextarea.selectionEnd;
-            const value = playgroundCodeTextarea.value;
-            const tabString = "    "; // 4 spaces
+        let editorInstance = null; // Store Monaco Editor instance
+        let pendingEditorState = null; // Store code and language if tryInPlayground is called before init
 
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                if (start === end) {
-                    if (e.shiftKey) {
-                        // Unindent single line (Shift+Tab): remove up to 4 leading spaces
-                        const lastNewline = value.lastIndexOf('\n', start - 1);
-                        const lineStart = lastNewline === -1 ? 0 : lastNewline + 1;
-                        const currentLine = value.substring(lineStart, start);
-                        if (currentLine.startsWith(tabString)) {
-                            playgroundCodeTextarea.value = value.substring(0, lineStart) + currentLine.substring(4) + value.substring(start);
-                            playgroundCodeTextarea.selectionStart = playgroundCodeTextarea.selectionEnd = start - 4;
-                        } else {
-                            const match = currentLine.match(/^\s+/);
-                            const spaces = match ? match[0].length : 0;
-                            if (spaces > 0) {
-                                playgroundCodeTextarea.value = value.substring(0, lineStart) + currentLine.substring(spaces) + value.substring(start);
-                                playgroundCodeTextarea.selectionStart = playgroundCodeTextarea.selectionEnd = start - spaces;
-                            }
-                        }
-                    } else {
-                        // Indent single cursor: insert 4 spaces
-                        playgroundCodeTextarea.value = value.substring(0, start) + tabString + value.substring(end);
-                        playgroundCodeTextarea.selectionStart = playgroundCodeTextarea.selectionEnd = start + tabString.length;
-                    }
-                } else {
-                    // Multi-line selection: indent/unindent each selected line
-                    // Find start of the first selected line
-                    const firstNewlineBefore = value.lastIndexOf('\n', start - 1);
-                    const selectionLineStart = firstNewlineBefore === -1 ? 0 : firstNewlineBefore + 1;
-                    
-                    // Find end of the last selected line
-                    const nextNewlineAfter = value.indexOf('\n', end);
-                    const selectionLineEnd = nextNewlineAfter === -1 ? value.length : nextNewlineAfter;
+        // Initialize Monaco Editor
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+        require(['vs/editor/editor.main'], function() {
+            // Define custom theme to match our application colors
+            monaco.editor.defineTheme('aprenderTheme', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: '', foreground: 'F8FAFC' },
+                    { token: 'comment', foreground: '64748B', fontStyle: 'italic' },
+                    { token: 'keyword', foreground: '818CF8', fontStyle: 'bold' },
+                    { token: 'string', foreground: '34D399' },
+                    { token: 'number', foreground: '60A5FA' },
+                    { token: 'type', foreground: 'F472B6' },
+                    { token: 'class', foreground: 'F472B6' }
+                ],
+                colors: {
+                    'editor.background': '#070A13',
+                    'editor.foreground': '#F8FAFC',
+                    'editorLineNumber.foreground': '#475569',
+                    'editorLineNumber.activeForeground': '#818CF8',
+                    'editor.lineHighlightBackground': '#1E293B33',
+                    'editor.selectionBackground': '#818CF833',
+                    'editor.inactiveSelectionBackground': '#818CF81A',
+                }
+            });
 
-                    const affectedText = value.substring(selectionLineStart, selectionLineEnd);
-                    const lines = affectedText.split('\n');
-                    
-                    let difference = 0;
-                    const updatedLines = lines.map(line => {
-                        if (e.shiftKey) {
-                            if (line.startsWith(tabString)) {
-                                difference -= 4;
-                                return line.substring(4);
-                            } else {
-                                const match = line.match(/^\s+/);
-                                const spaces = match ? Math.min(match[0].length, 4) : 0;
-                                difference -= spaces;
-                                return line.substring(spaces);
-                            }
-                        } else {
-                            difference += 4;
-                            return tabString + line;
-                        }
-                    });
-
-                    playgroundCodeTextarea.value = value.substring(0, selectionLineStart) + updatedLines.join('\n') + value.substring(selectionLineEnd);
-                    playgroundCodeTextarea.selectionStart = start + (e.shiftKey ? Math.max(difference, -4) : 4);
-                    playgroundCodeTextarea.selectionEnd = end + difference;
+            editorInstance = monaco.editor.create(document.getElementById('playground-code-editor'), {
+                value: pendingEditorState ? pendingEditorState.code : '// Escribe tu código aquí...\n',
+                language: pendingEditorState ? pendingEditorState.lang : 'javascript',
+                theme: 'aprenderTheme',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: 'Fira Code, monospace',
+                lineHeight: 22,
+                padding: { top: 16, bottom: 16 },
+                scrollbar: {
+                    vertical: 'visible',
+                    horizontal: 'visible',
+                    useShadows: false,
+                    verticalScrollbarSize: 8,
+                    horizontalScrollbarSize: 8,
                 }
-            } else if (e.key === 'Enter') {
-                // Find current line start
-                const lastNewline = value.lastIndexOf('\n', start - 1);
-                const lineStart = lastNewline === -1 ? 0 : lastNewline + 1;
-                const currentLine = value.substring(lineStart, start);
-                
-                // Get leading whitespace
-                const whitespaceMatch = currentLine.match(/^\s*/);
-                let indent = whitespaceMatch ? whitespaceMatch[0] : '';
-                
-                // Check if current line ends with block-opening character (e.g., '{' or ':')
-                const trimmedLine = currentLine.trim();
-                if (trimmedLine.endsWith('{') || trimmedLine.endsWith(':')) {
-                    indent += tabString;
-                }
-                
-                e.preventDefault();
-                
-                // If cursor is right before a closing brace/parenthesis/bracket, insert a newline and indent nicely
-                const nextChar = value.charAt(start);
-                if ((trimmedLine.endsWith('{') && nextChar === '}') || (trimmedLine.endsWith('(') && nextChar === ')')) {
-                    const baseIndent = whitespaceMatch ? whitespaceMatch[0] : '';
-                    playgroundCodeTextarea.value = value.substring(0, start) + '\n' + indent + '\n' + baseIndent + value.substring(start);
-                    playgroundCodeTextarea.selectionStart = playgroundCodeTextarea.selectionEnd = start + 1 + indent.length;
-                } else {
-                    playgroundCodeTextarea.value = value.substring(0, start) + '\n' + indent + value.substring(start);
-                    playgroundCodeTextarea.selectionStart = playgroundCodeTextarea.selectionEnd = start + 1 + indent.length;
-                }
-            }
+            });
+            pendingEditorState = null;
         });
 
         let pyodideInstance = null;
@@ -1976,7 +1941,16 @@
             }
         }
 
-        playgroundLangSelect.addEventListener('change', checkPlaygroundStatus);
+        playgroundLangSelect.addEventListener('change', () => {
+            checkPlaygroundStatus();
+            if (editorInstance) {
+                const lang = playgroundLangSelect.value;
+                const model = editorInstance.getModel();
+                if (model) {
+                    monaco.editor.setModelLanguage(model, lang);
+                }
+            }
+        });
 
         // Preload code when "Probar" is clicked
         window.tryInPlayground = function(lang, encodedCode) {
@@ -1987,7 +1961,15 @@
             if (targetLang === 'cs') targetLang = 'csharp';
 
             playgroundLangSelect.value = targetLang;
-            playgroundCodeTextarea.value = code;
+            if (editorInstance) {
+                editorInstance.setValue(code);
+                const model = editorInstance.getModel();
+                if (model) {
+                    monaco.editor.setModelLanguage(model, targetLang);
+                }
+            } else {
+                pendingEditorState = { code: code, lang: targetLang };
+            }
             
             playgroundDrawer.classList.add('open');
             checkPlaygroundStatus();
@@ -2014,7 +1996,7 @@
         // Run code click handler
         runCodeBtn.addEventListener('click', async () => {
             const lang = playgroundLangSelect.value;
-            const code = playgroundCodeTextarea.value;
+            const code = editorInstance ? editorInstance.getValue() : '';
             
             if (!code.trim()) {
                 printToTerminal("El editor está vacío.", "error");
@@ -2047,7 +2029,7 @@
                 return;
             }
 
-            const code = playgroundCodeTextarea.value;
+            const code = editorInstance ? editorInstance.getValue() : '';
             const lang = playgroundLangSelect.value;
             if (!code.trim()) {
                 printToTerminal("\n[Sistema] El editor está vacío. Escribe o carga algo de código para que el Mentor pueda ayudarte.", "error");
